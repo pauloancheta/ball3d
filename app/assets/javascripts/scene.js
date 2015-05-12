@@ -9,7 +9,8 @@ $(document).ready(function(){
       renderer          = new THREE.WebGLRenderer(),
       light             = new THREE.AmbientLight( 0x404040 ),
       directionalLight  = new THREE.DirectionalLight( 0xffffff ),
-      gridHelper        = new THREE.GridHelper( GRID_HELPER_SIZE, GRID_HELPER_STEP );    
+      gridHelper        = new THREE.GridHelper( GRID_HELPER_SIZE, GRID_HELPER_STEP );
+
 
   // RENDERERS
   renderer.setSize( window.innerWidth - 100 , window.innerHeight - 100 );
@@ -31,17 +32,20 @@ $(document).ready(function(){
 
   // MATERIALS 
   // BALL MATERIAL
-  var geometry = new THREE.SphereGeometry( 5, 32, 32 ),
-      material = new THREE.MeshLambertMaterial( { color: 0x00ff00 } ),
-      shere = new THREE.Mesh( geometry, material );
+  var geometry  = new THREE.SphereGeometry( 5, 32, 32 ),
+      material  = new THREE.MeshLambertMaterial( { color: 0x00ff00 } ),
+      sphere     = new THREE.Mesh( geometry, material );
+  sphere.position.set(1,4,1) // floor will be on 4 for the sphere.
+
   // ICOSAHEDRON MATERIAL
-  var icoGeom = new THREE.IcosahedronGeometry(10, 1),
+  var icoGeometry = new THREE.IcosahedronGeometry(10, 1),
       icoMaterial = new THREE.MeshLambertMaterial( {color: 0xff0000} ),
-      ico = new THREE.Mesh( icoGeom, icoMaterial );
+      icosahedron = new THREE.Mesh( icoGeometry, icoMaterial );
+  icosahedron.position.set(30,8,5)
 
   // ADD OBJECTS TO SCENE
-  scene.add( ico );
-  scene.add( shere );
+  scene.add( icosahedron );
+  scene.add( sphere );
 
 
   function render() {
@@ -49,4 +53,12 @@ $(document).ready(function(){
     renderer.render( scene, camera );
   }
   render();
+
+  $(this).on('keyup', function(e){
+    if(e.which === 32){
+      sphere.position.y += 1; //This will be used for animate
+
+    }
+  })
+
 });
