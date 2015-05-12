@@ -1,9 +1,12 @@
 $(document).ready(function(){
-  var world, mass, body, shape, timeStep=1/60,
-      geometry, material, icosahedron, scene, renderer, camera;
+  var world, timeStep=1/60, scene, renderer, camera,
+      icosahedron, icosahedronPhysics, shape,
+      groundBody, groundPhysics, groundShape;
   // CONSTANTS
   var GRID_HELPER_SIZE = 40,
-      GRID_HELPER_STEP = 2;
+      GRID_HELPER_STEP = 2,
+      FLOOR_MASS       = 0;
+      MASS             = 5;
 
   initThree();
   initCannon();
@@ -12,18 +15,35 @@ $(document).ready(function(){
   function initCannon() {
     world                   = new CANNON.World();
     world.broadphase        = new CANNON.NaiveBroadphase();
-    world.solver.iterations = 10;
-    world.gravity.set(0,1,0);
-    shape                   = new CANNON.Box(new CANNON.Vec3(1,1,1));
-    mass                    = 1;
-    body                    = new CANNON.Body({
-                                    mass: 1
+    shape                   = new CANNON.Sphere(new CANNON.Vec3(10,10,10));
+    groundShape             = new CANNON.Plane();
+    icosahedronPhysics      = new CANNON.Body({
+                                    mass: MASS
                                   });
-    body.addShape(shape);
-    body.angularVelocity.set(0,10,0);
-    body.angularDamping     = 0.5;
-    world.addBody(body);
+    groundPhysics           = new CANNON.Body({
+                                    mass: 0, // mass == 0 makes the body static
+                                    material: new CANNON.Material()
+                                  });
+    var ballContact         = new CANNON.ContactMaterial( groundPhysics, icosahedronPhysics, 0.0, 0.0);
+    
+    world.solver.iterations = 10;
+    world.gravity.set(0,-9.8,0);
+
+    icosahedronPhysics.addShape(shape);
+    icosahedronPhysics.position.set(0,50,0)
+    icosahedronPhysics.angularVelocity.set(0,0,0);
+    icosahedronPhysics.angularDamping     = 0.5;
+    world.addBody(icosahedronPhysics);
+
+    
+    groundPhysics.addShape(groundShape);
+    world.addBody(groundPhysics);
+
+    ballContact.contactEquationStiffness = 3e9;
+    ballContact.contactEquationRelaxation = 10;
+    world.addContactMaterial(ballContact);
   }
+
   function initThree(){
     // INITIALIZE CANVAS
     scene                 = new THREE.Scene();
@@ -33,15 +53,10 @@ $(document).ready(function(){
         directionalLight  = new THREE.DirectionalLight( 0xffffff ),
         gridHelper        = new THREE.GridHelper( GRID_HELPER_SIZE, GRID_HELPER_STEP );
 
-    // RENDERERS
     renderer.setSize( window.innerWidth - 100 , window.innerHeight - 100 );
     renderer.setClearColor( 0x757575 );
     document.body.appendChild( renderer.domElement );
-
-    // CAMERA
-    camera.position.set(1,10,40); // camera position to x , y , z
-
-    // LIGHTING
+    camera.position.set(1,10,100); // camera position to x , y , z
     directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
 
     // INITIAL CANVAS
@@ -50,14 +65,19 @@ $(document).ready(function(){
     scene.add( camera );
     scene.add( gridHelper );
 
-    // ICOSAHEDRON MATERIAL
+    // MATERIALS
     var icoGeometry = new THREE.IcosahedronGeometry(10, 1),
         icoMaterial = new THREE.MeshLambertMaterial( {color: 0xff0000} );
-    icosahedron = new THREE.Mesh( icoGeometry, icoMaterial );
-    icosahedron.position.set(0,0,0)
+    icosahedron     = new THREE.Mesh( icoGeometry, icoMaterial );
+    icosahedron.position.set(-100,-100,-100);
 
+    var groundGeometry = new THREE.BoxGeometry(100 , 1, 100),
+        groundMaterial = new THREE.MeshLambertMaterial( {color: 0xcccccc} );
+    groundBody          = new THREE.Mesh( groundGeometry, groundMaterial );
+    groundBody.position.set(0,0,0);
     // ADD OBJECTS TO SCENE
     scene.add( icosahedron );
+    scene.add( groundBody );
   }    
 
   function animate() {
@@ -69,16 +89,15 @@ $(document).ready(function(){
       // Step the physics world
       world.step(timeStep);
       // Copy coordinates from Cannon.js to Three.js
-      icosahedron.position.copy(body.position);
-      icosahedron.quaternion.copy(body.quaternion);
+      icosahedron.position.copy(icosahedronPhysics.position);
+      icosahedron.quaternion.copy(icosahedronPhysics.quaternion);
+
+      groundBody.position.copy(groundPhysics.position);
+      groundBody.quaternion.copy(groundPhysics.quaternion);
   }
   function render() {
       renderer.render( scene, camera );
   }
-
-
-
-
    
       
 });
