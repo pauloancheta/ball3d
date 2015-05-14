@@ -6,7 +6,9 @@ $(document).ready(function(){
   var GRID_HELPER_SIZE = 40,
       GRID_HELPER_STEP = 2,
       FLOOR_MASS       = 0,
-      MASS             = 1;
+      MASS             = 10,
+      FLOOR_LENGTH     = 75,
+      CANNON_FLOOR_LENGTH = FLOOR_LENGTH - 27;
 
   initThree();
   initCannon();
@@ -16,17 +18,17 @@ $(document).ready(function(){
     world                   = new CANNON.World();
     world.broadphase        = new CANNON.NaiveBroadphase();
     sphereShape             = new CANNON.Sphere(10);
-    groundShape             = new CANNON.Plane();
+    groundShape             = new CANNON.Box(new CANNON.Vec3(CANNON_FLOOR_LENGTH - 15, CANNON_FLOOR_LENGTH - 15, 1));
 
     icosahedronBody         = new CANNON.Body({
-                                    mass: MASS,
+                                    mass: MASS
                                   });
     groundBody              = new CANNON.Body({
-                                    mass: FLOOR_MASS, // mass == 0 makes the body static
+                                    mass: FLOOR_MASS
                                   });
 
     world.solver.iterations = 10;
-    world.gravity.set(0,-20,0);
+    world.gravity.set(0,-40,0);
     world.defaultContactMaterial.contactEquationStiffness = 1e9;
     world.defaultContactMaterial.contactEquationRegularizationTime = 4;
 
@@ -35,11 +37,12 @@ $(document).ready(function(){
     icosahedronBody.linearDamping     = 0.5;
     world.addBody(icosahedronBody);
     
+
     groundBody.addShape(groundShape);
-    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
+    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0.3,0.5),-Math.PI/2 );
     world.addBody(groundBody);
 
-    var ballContact         = new CANNON.ContactMaterial( groundBody, icosahedronBody, 0.0, 0.0);
+    var ballContact         = new CANNON.ContactMaterial( groundBody, icosahedronBody, 0.0, 0.3);
     
     world.addContactMaterial(ballContact);
   }
@@ -83,7 +86,7 @@ $(document).ready(function(){
     icosahedron     = new THREE.Mesh( icoGeometry, icoMaterial );
     icosahedron.castShadow = true;
   
-    var groundGeometry = new THREE.BoxGeometry(1000 , 1000, 1),
+    var groundGeometry = new THREE.BoxGeometry(FLOOR_LENGTH , FLOOR_LENGTH, 1),
         groundMaterial = new THREE.MeshLambertMaterial( {color: 0xcccccc} );
     ground             = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true;
