@@ -6,7 +6,7 @@ $(document).ready(function(){
   var GRID_HELPER_SIZE = 40,
       GRID_HELPER_STEP = 2,
       FLOOR_MASS       = 0,
-      MASS             = 5;
+      MASS             = 1;
 
   initThree();
   initCannon();
@@ -15,7 +15,7 @@ $(document).ready(function(){
   function initCannon() {
     world                   = new CANNON.World();
     world.broadphase        = new CANNON.NaiveBroadphase();
-    sphereShape             = new CANNON.Sphere(1);
+    sphereShape             = new CANNON.Sphere(10);
     groundShape             = new CANNON.Plane();
 
     icosahedronBody         = new CANNON.Body({
@@ -26,12 +26,12 @@ $(document).ready(function(){
                                   });
 
     world.solver.iterations = 10;
-    world.gravity.set(0,-9.8,0);
+    world.gravity.set(0,-20,0);
     world.defaultContactMaterial.contactEquationStiffness = 1e9;
     world.defaultContactMaterial.contactEquationRegularizationTime = 4;
 
     icosahedronBody.addShape(sphereShape);
-    icosahedronBody.position.set(0,50,0)
+    icosahedronBody.position.set(0,20,0)
     icosahedronBody.linearDamping     = 0.5;
     world.addBody(icosahedronBody);
     
@@ -50,15 +50,26 @@ $(document).ready(function(){
     renderer              = new THREE.WebGLRenderer();
     camera                = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
     var light             = new THREE.AmbientLight( 0x404040 ),
-        directionalLight  = new THREE.DirectionalLight( 0xffffff ),
+        directionalLight  = new THREE.DirectionalLight( 0xffffff, 1 ),
         gridHelper        = new THREE.GridHelper( GRID_HELPER_SIZE, GRID_HELPER_STEP );
 
     renderer.setSize( window.innerWidth - 100 , window.innerHeight - 100 );
     renderer.setClearColor( 0x757575 );
+    renderer.shadowMapEnabled = true;
     document.body.appendChild( renderer.domElement );
     camera.position.set(1,25,100); // camera position to x , y , z
     camera.lookAt( new THREE.Vector3() )
-    directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+
+    directionalLight.position.set(  40, 50, 20 );
+    directionalLight.target.position.set( 0, 0, 0 );
+    directionalLight.castShadow = true;
+    directionalLight.shadowCameraNear = 20;
+    directionalLight.shadowCameraFar = camera.far;
+    directionalLight.shadowCameraFov = 50;
+    directionalLight.shadowMapBias = 0.3;
+    directionalLight.shadowMapDarkness = 1;
+    directionalLight.shadowMapWidth = 1024;
+    directionalLight.shadowMapHeight = 1024;
 
     // INITIAL CANVAS
     scene.add( directionalLight );  
@@ -67,11 +78,12 @@ $(document).ready(function(){
     scene.add( gridHelper );
 
     // MATERIALS
-    var icoGeometry = new THREE.IcosahedronGeometry(1, 1),
+    var icoGeometry = new THREE.IcosahedronGeometry(10, 1),
         icoMaterial = new THREE.MeshLambertMaterial( {color: 0xff0000} );
     icosahedron     = new THREE.Mesh( icoGeometry, icoMaterial );
+    icosahedron.castShadow = true;
   
-    var groundGeometry = new THREE.BoxGeometry(100 , 100, 0),
+    var groundGeometry = new THREE.BoxGeometry(1000 , 1000, 1),
         groundMaterial = new THREE.MeshLambertMaterial( {color: 0xcccccc} );
     ground             = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.receiveShadow = true;
@@ -99,6 +111,5 @@ $(document).ready(function(){
   function render() {
       renderer.render( scene, camera );
   }
-   
       
 });
